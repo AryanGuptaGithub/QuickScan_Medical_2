@@ -1,34 +1,36 @@
-// middleware.ts (ROOT LEVEL - not inside app/)
-import { auth } from "@/auth";
+// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
-  const session = await auth();
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  });
+
   const { pathname } = request.nextUrl;
 
-  console.log(`Middleware checking: ${pathname}`);
+  console.log(`Middleware checking: ${pathname}, Has token: ${!!token}`);
 
   // Protect admin routes
-  // if (pathname.startsWith("/admin")) {
-  //   console.log("Admin route detected, checking auth...");
+  if (pathname.startsWith("/admin")) {
+    console.log("Admin route detected, checking auth...");
 
-    // if (!session) {
-    //   console.log('No session, redirecting to login');
-    //   const url = new URL('/auth/login', request.url);
-    //   url.searchParams.set('callbackUrl', encodeURIComponent(pathname));
-    //   return NextResponse.redirect(url);
-    // }
+    if (!token) {
+      console.log('No token, redirecting to login');
+      const url = new URL('/auth/login', request.url);
+      url.searchParams.set('callbackUrl', encodeURIComponent(pathname));
+      return NextResponse.redirect(url);
+    }
 
-    // if (session.user?.role !== "admin") {
-    //   console.log("User is not admin, redirecting");
-    //   const url = new URL("/", request.url);
-    //   url.searchParams.set("error", "unauthorized");
-    //   return NextResponse.redirect(url);
-    // }
+    if (token.role !== "admin") {
+      console.log("User is not admin, redirecting");
+      return NextResponse.redirect(new URL("/", request.url));
+    }
 
-  //   console.log("Admin access granted");
-  // }
+    console.log("Admin access granted");
+  }
 
   return NextResponse.next();
 }
