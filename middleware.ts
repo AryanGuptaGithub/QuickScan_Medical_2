@@ -10,8 +10,8 @@ export async function middleware(request: NextRequest) {
   console.log(`Middleware checking: ${pathname}`);
 
   // Protect admin routes
-  if (pathname.startsWith("/admin")) {
-    console.log("Admin route detected, checking auth...");
+  // if (pathname.startsWith("/admin")) {
+  //   console.log("Admin route detected, checking auth...");
 
     // if (!session) {
     //   console.log('No session, redirecting to login');
@@ -27,8 +27,8 @@ export async function middleware(request: NextRequest) {
     //   return NextResponse.redirect(url);
     // }
 
-    console.log("Admin access granted");
-  }
+  //   console.log("Admin access granted");
+  // }
 
   return NextResponse.next();
 }
