@@ -1,30 +1,28 @@
 // middleware.ts
+import { auth } from "@/src/auth"; // Updated import
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-  });
-
+  const session = await auth();
   const { pathname } = request.nextUrl;
 
-  console.log(`Middleware checking: ${pathname}, Has token: ${!!token}`);
+  console.log(`Middleware checking: ${pathname}`);
+  console.log(`Session exists: ${!!session}`);
+  console.log(`User role: ${session?.user?.role}`);
 
-  // Protect admin routes
+  // Protect admin routes - UNCOMMENT THIS
   if (pathname.startsWith("/admin")) {
     console.log("Admin route detected, checking auth...");
 
-    if (!token) {
-      console.log('No token, redirecting to login');
+    if (!session) {
+      console.log('No session, redirecting to login');
       const url = new URL('/auth/login', request.url);
       url.searchParams.set('callbackUrl', encodeURIComponent(pathname));
       return NextResponse.redirect(url);
     }
 
-    if (token.role !== "admin") {
+    if (session.user?.role !== "admin") {
       console.log("User is not admin, redirecting");
       return NextResponse.redirect(new URL("/", request.url));
     }
